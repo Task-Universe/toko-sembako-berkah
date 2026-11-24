@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pemantauan Stok Toko Sembako - JL. Naskah 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(120deg, #bbf7d0, #6ee7b7, #fde68a, #fbbf24, #86efac, #34d399);
+      background-size: 400% 400%;
+      background-attachment: fixed;
+      animation: auraShift 18s ease-in-out infinite;
+    }
+    /* Aura glow: dua cahaya lembut hijau & emas yang melayang pelan */
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      width: 60vmax; height: 60vmax;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: .55;
+      pointer-events: none;
+      z-index: -1;
+    }
+    body::before {
+      top: -20vmax; left: -15vmax;
+      background: radial-gradient(circle, rgba(250,204,21,.85), rgba(250,204,21,0) 65%);
+      animation: auraFloatA 14s ease-in-out infinite alternate;
+    }
+    body::after {
+      bottom: -25vmax; right: -15vmax;
+      background: radial-gradient(circle, rgba(16,185,129,.8), rgba(16,185,129,0) 65%);
+      animation: auraFloatB 17s ease-in-out infinite alternate;
+    }
+    @keyframes auraShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes auraFloatA {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(25vmax, 18vmax) scale(1.25); }
+    }
+    @keyframes auraFloatB {
+      from { transform: translate(0, 0) scale(1.1); }
+      to   { transform: translate(-22vmax, -20vmax) scale(.9); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body, body::before, body::after { animation: none; }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER -->
+  <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Store Branding -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-emerald-200 text-xl shadow-inner">
+          <i class="fa-solid fa-store"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg leading-tight tracking-tight">Toko Sembako Berkah</h1>
+          </div>
+          <p class="text-xs text-emerald-100/80 flex items-center gap-1.5 mt-0.5">
+            <i class="fa-solid fa-location-dot text-[11px] text-amber-300"></i>
+            <span>Jl. Naskah 2, Sukarami, Palembang</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Controls: Search, Lang, Mode -->
+      <div class="flex items-center flex-wrap gap-2.5 ml-auto">
+        <!-- Quick Search -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Cari kebutuhan..." 
+            class="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white text-slate-800 placeholder-slate-400 border border-emerald-600 focus:outline-none focus:ring-2 focus:ring-amber-400 w-36 sm:w-52 transition-all shadow-sm"
+          >
+        </div>
+
+        <!-- Language Toggle -->
+        <button 
+          id="langBtn" 
+          onclick="toggleLanguage()" 
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-800 hover:bg-emerald-900 border border-emerald-600 text-emerald-100 transition shadow-sm"
+          title="Ganti Bahasa / Switch Language"
+        >
+          <i class="fa-solid fa-globe text-emerald-300"></i>
+          <span id="langLabel">EN</span>
+        </button>
+
+        <!-- View Mode Switcher -->
+        <button 
+          id="roleBtn" 
+          onclick="toggleRole()" 
+          class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-400 hover:bg-amber-300 text-amber-950 transition shadow-sm shadow-amber-900/20 active:scale-95"
+        >
+          <i class="fa-solid fa-user-gear text-amber-900"></i>
+          <span id="roleLabel">Mode Pemilik</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SUBHEADER / STATUS ANNOUNCEMENT BAR -->
+  <div class="bg-emerald-900 text-emerald-200 text-xs py-2 px-4 border-b border-emerald-800/80">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="announcementText" class="font-medium">Informasi Ketersediaan Bahan Pokok & Kebutuhan Sehari-hari Warga Sekitar</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px] text-emerald-300">
+        <span class="flex items-center gap-1.5"><i class="fa-regular fa-clock"></i> <span id="lastUpdated">Diperbarui: Hari ini</span></span>
+        <span class="hidden sm:inline">|</span>
+        <span class="hidden sm:flex items-center gap-1"><i class="fa-solid fa-phone text-emerald-400"></i> 0812-7890-XXXX</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- METRICS & FILTER BAR -->
+    <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <!-- Quick Status Counters -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
+        <div class="bg-slate-50 border border-slate-200/60 rounded-xl px-3 py-2 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-500 font-medium" id="metricTotalLabel">Total Item</div>
+            <div class="text-base font-extrabold text-slate-800" id="metricTotal">24</div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50/50 border border-emerald-200/60 rounded-xl px-3 py-2 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <div class="text-[11px] text-emerald-700 font-medium" id="metricInStockLabel">Tersedia</div>
+            <div class="text-base font-extrabold text-emerald-800" id="metricInStock">18</div>
+          </div>
+        </div>
+
+        <div class="bg-amber-50/50 border border-amber-200/60 rounded-xl px-3 py-2 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <div class="text-[11px] text-amber-700 font-medium" id="metricLowLabel">Menipis</div>
+            <div class="text-base font-extrabold text-amber-800" id="metricLow">3</div>
+          </div>
+        </div>
+
+        <div class="bg-rose-50/50 border border-rose-200/60 rounded-xl px-3 py-2 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </div>
+          <div>
+            <div class="text-[11px] text-rose-700 font-medium" id="metricOutLabel">Habis</div>
+            <div class="text-base font-extrabold text-rose-800" id="metricOut">3</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
+        <button onclick="setFilter('all')" id="filter-all" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-700 text-white shadow-sm whitespace-nowrap transition">Semua</button>
+        <button onclick="setFilter('in')" id="filter-in" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">Tersedia</button>
+        <button onclick="setFilter('low')" id="filter-low" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">Stok Menipis</button>
+        <button onclick="setFilter('out')" id="filter-out" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">Habis</button>
+      </div>
+    </section>
+
+    <!-- ADMIN ACTION BANNER (Only visible in Owner Mode) -->
+    <div id="adminBanner" class="hidden bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 p-4 rounded-2xl shadow-sm border border-amber-400/60 items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-amber-900 text-base shadow-sm">
+          <i class="fa-solid fa-lock-open"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-sm leading-tight text-amber-950">Mode Pemilik Toko Aktif</h2>
+          <p class="text-xs text-amber-900/80">Anda dapat langsung menambah/mengurangi jumlah ketersediaan unit dengan tombol [+] [-] atau ketik angka langsung, ganti foto, atau tambah barang baru.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openAddItem()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition shadow-sm whitespace-nowrap">
+          <i class="fa-solid fa-circle-plus mr-1"></i> Tambah Barang Baru
+        </button>
+        <button onclick="resetToInitialData()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-900 text-amber-100 hover:bg-amber-800 transition shadow-sm whitespace-nowrap">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Reset Data
+        </button>
+      </div>
+    </div>
+
+    <!-- PRODUCT DISPLAY CONTAINERS -->
+    <div id="categoriesWrapper" class="space-y-8">
+      <!-- Injected by JavaScript -->
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200/80 mt-auto py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
+      <p class="font-semibold text-slate-700">Toko Sembako Berkah — Sistem Pemantauan Stok Warga & Pemilik Toko</p>
+      <p>Proyek Semester Kelompok 7 (Computer Engineering Department - Politeknik Negeri Sriwijaya)</p>
+      <div class="flex items-center justify-center gap-3 pt-2 text-[11px] text-slate-400">
+        <span>Muhammad Abdul Aziz</span>•
+        <span>Gusti Raihan Nur Rahmatullah</span>•
+        <span>M Fachrizal Kurniawan</span>•
+        <span>Aldery Rachmanda Wijaya</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ADD ITEM MODAL -->
+  <div id="addModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden my-auto">
+      <div class="bg-emerald-700 text-white px-5 py-3 flex items-center justify-between">
+        <h2 class="font-bold"><i class="fa-solid fa-boxes-packing mr-2"></i>Tambah Barang Baru</h2>
+        <button onclick="closeAddItem()" class="text-emerald-100 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-5 space-y-3">
+        <div><label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label><select id="addCat" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></select></div>
+        <div><label class="block text-xs font-bold text-slate-700 mb-1">Nama Barang</label><input id="addName" type="text" placeholder="Contoh: Beras Ramos 10 kg" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+        <div><label class="block text-xs font-bold text-slate-700 mb-1">Jenis Penjualan</label>
+          <select id="addType" onchange="toggleAddType()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            <option value="simple">Satu satuan (contoh: karung, botol)</option>
+            <option value="dual">Dus &amp; Eceran (dua satuan)</option>
+          </select></div>
+        <div><label class="block text-xs font-bold text-slate-700 mb-1" id="addPriceLabel">Harga Jual</label><input id="addPrice" type="text" placeholder="Contoh: 35000" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+        <div id="addSimple" class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Satuan Kemasan</label><input id="addUnit" type="text" placeholder="Contoh: pouch / bungkus" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Jumlah Stok Awal</label><input id="addStock" type="number" min="0" value="10" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+          <div class="col-span-2"><label class="block text-xs font-bold text-slate-700 mb-1">Batas Minimum (Menipis)</label><input id="addMin" type="number" min="0" value="3" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+        </div>
+        <div id="addDual" class="hidden grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Nama Satuan Dus</label><input id="addDusUnit" type="text" value="dus" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Stok Dus</label><input id="addDusStock" type="number" min="0" value="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Nama Satuan Eceran</label><input id="addSatUnit" type="text" value="bks" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+          <div><label class="block text-xs font-bold text-slate-700 mb-1">Stok Eceran</label><input id="addSatStock" type="number" min="0" value="20" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></div>
+        </div>
+        <div><label class="block text-xs font-bold text-slate-700 mb-1">Foto Barang (opsional)</label><input id="addPhoto" type="file" accept="image/*" class="text-xs"></div>
+        <p id="addError" class="hidden text-xs font-semibold text-rose-600"></p>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button onclick="closeAddItem()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600">Batal</button>
+          <button onclick="saveNewItem()" class="px-4 py-2 text-sm font-bold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white">Simpan Barang</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center"><i class="fa-solid fa-lock"></i></div>
+        <div>
+          <h2 id="loginTitle" class="font-extrabold text-slate-800"></h2>
+          <p id="loginDesc" class="text-xs text-slate-500"></p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <input id="loginUser" type="text" autocomplete="username" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <input id="loginPass" type="password" autocomplete="current-password" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <p id="loginError" class="hidden text-xs font-semibold text-rose-600"></p>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button onclick="closeLogin()" id="loginCancel" class="flex-1 px-3 py-2 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"></button>
+        <button onclick="submitLogin()" id="loginSubmit" class="flex-1 px-3 py-2 text-sm font-bold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white"></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // System State
+    let currentLang = 'id';
+    let isOwnerMode = false;
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    // Translations Dictionary
+    const i18n = {
+      id: {
+        langBtn: 'EN',
+        roleBuyer: 'Mode Pemilik',
+        roleOwner: 'Keluar (Log Out)',
+        loginTitle: 'Login Mode Pemilik', loginDesc: 'Hanya pemilik toko yang dapat mengubah stok.',
+        loginUser: 'Username', loginPass: 'Password', loginCancel: 'Batal', loginSubmit: 'Masuk',
+        loginWrong: 'Username atau password salah.',
+        photoBtn: 'Ganti Foto', canBuy: 'Bisa Dibeli', soldOut: 'Stok Kosong', stockLabel: 'Atur Stok:',
+        searchPlaceholder: 'Cari kebutuhan...',
+        announcement: 'Informasi Ketersediaan Bahan Pokok & Kebutuhan Sehari-hari Warga Sekitar',
+        lastUpdated: 'Diperbarui: Real-time',
+        metricTotal: 'Total Item',
+        metricInStock: 'Tersedia',
+        metricLow: 'Menipis',
+        metricOut: 'Habis',
+        filterAll: 'Semua',
+        filterIn: 'Tersedia',
+        filterLow: 'Stok Menipis',
+        filterOut: 'Habis',
+        statusIn: 'Tersedia',
+        statusLow: 'Menipis',
+        statusOut: 'Habis',
+        dusLabel: 'Dus',
+        satuanLabel: 'Satuan',
+        unitPieces: 'item',
+        unitRemaining: 'Sisa',
+        cat1Title: 'Kebutuhan Pokok / Sembako',
+        cat1Desc: 'Bahan pangan utama untuk konsumsi sehari-hari keluarga',
+        cat2Title: 'Minuman & Seduhan',
+        cat2Desc: 'Air mineral, susu, teh, dan kopi seduhan khas Palembang',
+        cat3Title: 'Obat-obatan & P3K',
+        cat3Desc: 'Kebutuhan obat bebas (OTC), minyak angin, dan pertolongan pertama',
+        cat4Title: 'Bumbu Dapur & Penyedap',
+        cat4Desc: 'Garam, penyedap rasa, kecap, dan bahan masakan dapur'
+      },
+      en: {
+        langBtn: 'ID',
+        roleBuyer: 'Store Owner Mode',
+        roleOwner: 'Log Out',
+        loginTitle: 'Owner Mode Login', loginDesc: 'Only the store owner can change stock.',
+        loginUser: 'Username', loginPass: 'Password', loginCancel: 'Cancel', loginSubmit: 'Log In',
+        loginWrong: 'Wrong username or password.',
+        photoBtn: 'Change Photo', canBuy: 'Available to Buy', soldOut: 'Out of Stock', stockLabel: 'Set Stock:',
+        searchPlaceholder: 'Search items...',
+        announcement: 'Real-time Grocery & Essential Goods Availability for Local Residents',
+        lastUpdated: 'Updated: Real-time',
+        metricTotal: 'Total Items',
+        metricInStock: 'In Stock',
+        metricLow: 'Low Stock',
+        metricOut: 'Out of Stock',
+        filterAll: 'All',
+        filterIn: 'In Stock',
+        filterLow: 'Low Stock',
+        filterOut: 'Out of Stock',
+        statusIn: 'In Stock',
+        statusLow: 'Low Stock',
+        statusOut: 'Out of Stock',
+        dusLabel: 'Box/Case',
+        satuanLabel: 'Pcs',
+        unitPieces: 'items',
+        unitRemaining: 'Remaining',
+        cat1Title: 'Staple Foods & Groceries',
+        cat1Desc: 'Daily household food staples and cooking necessities',
+        cat2Title: 'Beverages & Brews',
+        cat2Desc: 'Drinking water, milk, tea, and local Semendo coffee brew',
+        cat3Title: 'Medicines & First Aid',
+        cat3Desc: 'Over-the-counter remedies, medicated oils, and first-aid items',
+        cat4Title: 'Kitchen Seasonings & Condiments',
+        cat4Desc: 'Salt, flavorings, soy sauce, and cooking essentials'
+      }
+    };
+
+    // Initial Product Dataset (Exactly 6 items per category, NO product codes)
+    const initialCategories = [
+      {
+        id: 'cat1',
+        nameId: 'Kebutuhan Pokok / Sembako',
+        nameEn: 'Staple Foods & Groceries',
+        icon: 'fa-wheat-awn',
+        color: 'emerald',
+        items: [
+          {
+            id: 101,
+            name: 'Beras Ramos 5 kg',
+            price: 'Rp 74.000',
+            unitType: 'simple',
+            unitName: 'karung',
+            stock: 18,
+            minThreshold: 4
+          },
+          {
+            id: 102,
+            name: 'Minyak Goreng 2 Liter',
+            price: 'Rp 36.500',
+            unitType: 'simple',
+            unitName: 'pouch',
+            stock: 24,
+            minThreshold: 5
+          },
+          {
+            id: 103,
+            name: 'Gula Pasir 1 kg',
+            price: 'Rp 17.500',
+            unitType: 'simple',
+            unitName: 'bungkus',
+            stock: 30,
+            minThreshold: 6
+          },
+          {
+            id: 104,
+            name: 'Telur Ayam (1 Karpet)',
+            price: 'Rp 52.000',
+            unitType: 'simple',
+            unitName: 'karpet (30 butir)',
+            stock: 12,
+            minThreshold: 3
+          },
+          {
+            id: 105,
+            name: 'Tepung Terigu Serbaguna 1 kg',
+            price: 'Rp 12.500',
+            unitType: 'simple',
+            unitName: 'bungkus',
+            stock: 3,
+            minThreshold: 4
+          },
+          {
+            id: 106,
+            name: 'Mie Goreng Instan',
+            price: 'Rp 115.000 / dus • Rp 3.100 / bks',
+            unitType: 'dual',
+            dusStock: 4,
+            dusUnit: 'dus',
+            satuanStock: 28,
+            satuanUnit: 'bks',
+            minThreshold: 2
+          }
+        ]
+      },
+      {
+        id: 'cat2',
+        nameId: 'Minuman & Seduhan',
+        nameEn: 'Beverages & Brews',
+        icon: 'fa-mug-hot',
+        color: 'sky',
+        items: [
+          {
+            id: 201,
+            name: 'Air Mineral Galon 19 Liter',
+            price: 'Rp 20.000',
+            unitType: 'simple',
+            unitName: 'galon',
+            stock: 15,
+            minThreshold: 3
+          },
+          {
+            id: 202,
+            name: 'Air Mineral Botol 600 ml',
+            price: 'Rp 48.000 / dus • Rp 3.000 / btl',
+            unitType: 'dual',
+            dusStock: 8,
+            dusUnit: 'dus',
+            satuanStock: 32,
+            satuanUnit: 'btl',
+            minThreshold: 3
+          },
+          {
+            id: 203,
+            name: 'Teh Celup Melati (Isi 25)',
+            price: 'Rp 6.500',
+            unitType: 'simple',
+            unitName: 'kotak',
+            stock: 16,
+            minThreshold: 4
+          },
+          {
+            id: 204,
+            name: 'Kopi Hitam Sachet (1 Renceng)',
+            price: 'Rp 15.000',
+            unitType: 'simple',
+            unitName: 'renceng (10 sachet)',
+            stock: 10,
+            minThreshold: 3
+          },
+          {
+            id: 205,
+            name: 'Susu Kental Manis Kaleng',
+            price: 'Rp 13.000',
+            unitType: 'simple',
+            unitName: 'kaleng',
+            stock: 2,
+            minThreshold: 4
+          },
+          {
+            id: 206,
+            name: 'Kopi Semendo Bubuk 250 gr',
+            price: 'Rp 28.000',
+            unitType: 'simple',
+            unitName: 'pouch',
+            stock: 9,
+            minThreshold: 3
+          }
+        ]
+      },
+      {
+        id: 'cat3',
+        nameId: 'Obat-obatan & P3K',
+        nameEn: 'Medicines & First Aid',
+        icon: 'fa-kit-medical',
+        color: 'red',
+        items: [
+          {
+            id: 301,
+            name: 'Paracetamol 500 mg (1 Strip)',
+            price: 'Rp 6.000',
+            unitType: 'simple',
+            unitName: 'strip (10 tablet)',
+            stock: 25,
+            minThreshold: 5
+          },
+          {
+            id: 302,
+            name: 'Obat Sakit Kepala & Flu (1 Strip)',
+            price: 'Rp 4.500',
+            unitType: 'simple',
+            unitName: 'strip',
+            stock: 18,
+            minThreshold: 4
+          },
+          {
+            id: 303,
+            name: 'Minyak Kayu Putih 60 ml',
+            price: 'Rp 23.500',
+            unitType: 'simple',
+            unitName: 'botol',
+            stock: 12,
+            minThreshold: 3
+          },
+          {
+            id: 304,
+            name: 'Minyak Angin Roll-on',
+            price: 'Rp 16.000',
+            unitType: 'simple',
+            unitName: 'botol',
+            stock: 14,
+            minThreshold: 4
+          },
+          {
+            id: 305,
+            name: 'Tablet Obat Maag (1 Strip)',
+            price: 'Rp 8.000',
+            unitType: 'simple',
+            unitName: 'strip',
+            stock: 2,
+            minThreshold: 4
+          },
+          {
+            id: 306,
+            name: 'Plester Luka Cepat (1 Amplop)',
+            price: 'Rp 6.000',
+            unitType: 'simple',
+            unitName: 'amplop (10 lembar)',
+            stock: 0,
+            minThreshold: 5
+          }
+        ]
+      },
+      {
+        id: 'cat4',
+        nameId: 'Bumbu Dapur & Penyedap',
+        nameEn: 'Kitchen Seasonings & Condiments',
+        icon: 'fa-pepper-hot',
+        color: 'amber',
+        items: [
+          {
+            id: 401,
+            name: 'Garam Kasar 500 gr',
+            price: 'Rp 3.500',
+            unitType: 'simple',
+            unitName: 'bungkus',
+            stock: 35,
+            minThreshold: 5
+          },
+          {
+            id: 402,
+            name: 'Kaldu Penyedap Rasa (1 Renceng)',
+            price: 'Rp 5.500',
+            unitType: 'simple',
+            unitName: 'renceng (12 sachet)',
+            stock: 12,
+            minThreshold: 3
+          },
+          {
+            id: 403,
+            name: 'Kecap Manis Refill 550 ml',
+            price: 'Rp 20.000',
+            unitType: 'simple',
+            unitName: 'pouch',
+            stock: 10,
+            minThreshold: 3
+          },
+          {
+            id: 404,
+            name: 'Bumbu Racik Nasi Goreng (Sachet)',
+            price: 'Rp 2.500',
+            unitType: 'simple',
+            unitName: 'sachet',
+            stock: 20,
+            minThreshold: 5
+          },
+          {
+            id: 405,
+            name: 'Lada Bubuk Renceng',
+            price: 'Rp 1.500',
+            unitType: 'simple',
+            unitName: 'renceng',
+            stock: 3,
+            minThreshold: 4
+          },
+          {
+            id: 406,
+            name: 'Saus Sambal Botol 335 ml',
+            price: 'Rp 14.000',
+            unitType: 'simple',
+            unitName: 'botol',
+            stock: 0,
+            minThreshold: 3
+          }
+        ]
+      }
+    ];
+
+    // Working Clone
+    let categories = JSON.parse(JSON.stringify(initialCategories));
+    let photos = {};
+    const EMOJI = {101:'🍚',102:'🫗',103:'🍬',104:'🥚',105:'🌾',106:'🍜',201:'🚰',202:'💧',203:'🍵',204:'☕',205:'🥛',206:'☕',
+                   301:'💊',302:'🤧',303:'🌿',304:'🧴',305:'💊',306:'🩹',401:'🧂',402:'🍲',403:'🥫',404:'🍳',405:'🌶️',406:'🍅'};
+    const PHOTO_FILES = {101:'101.jpg',102:'102.jpg',103:'103.jpg',104:'104.jpg',105:'tepung.jpg',106:'miegoreng.jpg',
+      201:'galon.jpeg',202:'airmineral.jpg',203:'tehcelup.jpg',204:'kopihitam.jpg',205:'susukental.jpg',206:'kopi.jpg',
+      301:'paracetamol.jpeg',302:'mixagrip.jpg',303:'kayuputih.jpg',304:'minyakrolon.png',305:'maag.jpg',306:'plester.jpg',
+      401:'garam.jpg',402:'masako.jpg',403:'kecapmanis.jpg',404:'nasgor.jpg',405:'lada.jpg',406:'saus.jpg'};
+    const CAT_EMOJI = {cat1:'🛒',cat2:'🥤',cat3:'💊',cat4:'🧂'};
+    try {
+      const saved = JSON.parse(localStorage.getItem('stok_data') || 'null');
+      if (Array.isArray(saved) && saved.length === categories.length) categories = saved;
+      photos = JSON.parse(localStorage.getItem('stok_photos') || '{}') || {};
+    } catch (e) {}
+    function saveData() {
+      try { localStorage.setItem('stok_data', JSON.stringify(categories)); } catch (e) {}
+    }
+    function savePhotos() {
+      try { localStorage.setItem('stok_photos', JSON.stringify(photos)); } catch (e) { alert('Foto terlalu besar / storage penuh'); }
+    }
+
+    // Product photo (under the status badge)
+    function renderPhoto(item, catId) {
+      const t = i18n[currentLang];
+      const emoji = EMOJI[item.id] || CAT_EMOJI[catId] || '📦';
+      const src = photos[item.id] || (PHOTO_FILES[item.id] ? `foto/${PHOTO_FILES[item.id]}` : `foto/${item.id}.jpg`);
+      const inner = `<img src="${src}" alt="${item.name}" class="w-full h-full object-cover"
+          onerror="photoFallback(this, '${emoji}')">`;
+      const del = isOwnerMode ? `<button onclick="deleteItem('${catId}', ${item.id})" title="Hapus" class="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 hover:bg-rose-50 text-rose-600 border border-slate-200 text-[10px] shadow-sm"><i class="fa-solid fa-trash"></i></button>` : '';
+      const btn = isOwnerMode ? `
+        <label class="absolute bottom-1 right-1 cursor-pointer text-[9px] font-bold bg-white/90 hover:bg-white text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 shadow-sm">
+          <i class="fa-solid fa-camera"></i> ${t.photoBtn}
+          <input type="file" accept="image/*" class="hidden" onchange="uploadPhoto(${item.id}, this)">
+        </label>` : '';
+      return `<div class="relative h-24 mb-2 rounded-lg overflow-hidden bg-gradient-to-br from-emerald-50 to-slate-100 border border-slate-200/70 flex items-center justify-center">${inner}${del}${btn}</div>`;
+    }
+
+    function photoFallback(img, emoji) {
+      if (/\/\d+\.jpg$/.test(img.src)) { img.src = img.src.replace(/\.jpg$/, '.png'); return; }
+      img.onerror = null;
+      img.replaceWith(Object.assign(document.createElement('span'), { className: 'text-4xl', textContent: emoji }));
+    }
+
+    // Public label under each card
+    function buyLabel(status) {
+      const t = i18n[currentLang];
+      return status === 'out'
+        ? `<div class="mt-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-100">${t.soldOut}</div>`
+        : `<div class="mt-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">${t.canBuy}</div>`;
+    }
+
+    function uploadPhoto(id, input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 320, r = Math.min(1, max / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          photos[id] = c.toDataURL('image/jpeg', 0.8);
+          savePhotos(); renderApp();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Typed stock input
+    function numInput(handler, value, cls) {
+      return `<input type="number" min="0" step="1" inputmode="numeric" value="${value}" ${handler}
+        onkeydown="if(event.key==='Enter')this.blur()"
+        class="${cls} text-center font-bold border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">`;
+    }
+    function cleanNum(v) { const n = parseInt(v, 10); return isNaN(n) ? 0 : Math.max(0, n); }
+    function setStock(catId, itemId, v) {
+      const item = categories.find(c => c.id === catId).items.find(i => i.id === itemId);
+      item.stock = cleanNum(v); renderApp();
+    }
+    function setDualStock(catId, itemId, type, v) {
+      const item = categories.find(c => c.id === catId).items.find(i => i.id === itemId);
+      if (type === 'dus') item.dusStock = cleanNum(v); else item.satuanStock = cleanNum(v);
+      renderApp();
+    }
+
+    // Determine status of item
+    function getItemStatus(item) {
+      if (item.unitType === 'dual') {
+        const total = item.dusStock + item.satuanStock;
+        if (total === 0) return 'out';
+        if (item.dusStock === 0 || item.satuanStock <= 5) return 'low';
+        return 'in';
+      } else {
+        if (item.stock === 0) return 'out';
+        if (item.stock <= item.minThreshold) return 'low';
+        return 'in';
+      }
+    }
+
+    // Status Badge Component
+    function renderBadge(status) {
+      const t = i18n[currentLang];
+      if (status === 'in') {
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${t.statusIn}
+                </span>`;
+      } else if (status === 'low') {
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> ${t.statusLow}
+                </span>`;
+      } else {
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> ${t.statusOut}
+                </span>`;
+      }
+    }
+
+    // Render Metrics Calculation
+    function updateMetrics() {
+      let total = 0;
+      let inStock = 0;
+      let low = 0;
+      let out = 0;
+
+      categories.forEach(cat => {
+        cat.items.forEach(item => {
+          total++;
+          const status = getItemStatus(item);
+          if (status === 'in') inStock++;
+          else if (status === 'low') low++;
+          else if (status === 'out') out++;
+        });
+      });
+
+      document.getElementById('metricTotal').innerText = total;
+      document.getElementById('metricInStock').innerText = inStock;
+      document.getElementById('metricLow').innerText = low;
+      document.getElementById('metricOut').innerText = out;
+    }
+
+    // Render Full App
+    function renderApp() {
+      saveData();
+      const container = document.getElementById('categoriesWrapper');
+      const t = i18n[currentLang];
+      container.innerHTML = '';
+
+      categories.forEach(cat => {
+        // Filter items
+        const filteredItems = cat.items.filter(item => {
+          const status = getItemStatus(item);
+          const matchesFilter = (currentFilter === 'all') || (currentFilter === status);
+          const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+          return matchesFilter && matchesSearch;
+        });
+
+        if (filteredItems.length === 0 && searchQuery !== '') {
+          return; // Skip empty category when searching
+        }
+
+        const catName = currentLang === 'id' ? cat.nameId : cat.nameEn;
+        let catDesc = '';
+        if (cat.id === 'cat1') catDesc = t.cat1Desc;
+        else if (cat.id === 'cat2') catDesc = t.cat2Desc;
+        else if (cat.id === 'cat3') catDesc = t.cat3Desc;
+        else if (cat.id === 'cat4') catDesc = t.cat4Desc;
+
+        // Category Section
+        const section = document.createElement('section');
+        section.className = "bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/90";
+
+        section.innerHTML = `
+          <!-- Category Header -->
+          <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-base border border-emerald-100">
+                <i class="fa-solid ${cat.icon}"></i>
+              </div>
+              <div>
+                <h2 class="font-extrabold text-slate-800 text-sm sm:text-base leading-tight">${catName}</h2>
+                <p class="text-xs text-slate-400 mt-0.5">${catDesc}</p>
+              </div>
+            </div>
+            <div class="text-xs font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
+              ${filteredItems.length} ${t.unitPieces}
+            </div>
+          </div>
+
+          <!-- Product Grid (Compact, Horizontal Layout, 6 items per row) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            ${filteredItems.map(item => renderItemCard(item, cat.id)).join('')}
+          </div>
+        `;
+
+        container.appendChild(section);
+      });
+
+      updateMetrics();
+    }
+
+    // Render Individual Product Card
+    function renderItemCard(item, catId) {
+      const t = i18n[currentLang];
+      const status = getItemStatus(item);
+
+      if (item.unitType === 'dual') {
+        const dusBadge = item.dusStock > 0 
+          ? `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">${t.dusLabel}: ${item.dusStock} ${item.dusUnit}</span>`
+          : `<span class="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">${t.dusLabel}: ${t.statusOut}</span>`;
+        
+        const satuanBadge = item.satuanStock > 0 
+          ? `<span class="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded">${t.satuanLabel}: ${item.satuanStock} ${item.satuanUnit}</span>`
+          : `<span class="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">${t.satuanLabel}: ${t.statusOut}</span>`;
+
+        return `
+          <div class="bg-slate-50/70 hover:bg-white rounded-xl p-3 border border-slate-200/90 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="flex items-start justify-between gap-1 mb-2">
+                ${renderBadge(status)}
+              </div>
+              ${renderPhoto(item, catId)}
+              <h3 class="font-bold text-slate-800 text-xs sm:text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-emerald-700 transition">
+                ${item.name}
+              </h3>
+              <div class="text-[11px] font-extrabold text-emerald-700 mb-2">${item.price}</div>
+              
+              <!-- Dual Availability Badges -->
+              <div class="flex flex-wrap gap-1 mb-2">
+                ${dusBadge}
+                ${satuanBadge}
+              </div>
+            </div>
+
+            <!-- Owner Quick Actions -->
+            ${isOwnerMode ? `
+              <div class="pt-2 border-t border-slate-200/80 space-y-1.5 text-[10px]">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-semibold">${t.dusLabel}:</span>
+                  <div class="flex items-center gap-1">
+                    <button onclick="adjustDualStock('${catId}', ${item.id}, 'dus', -1)" class="w-5 h-5 rounded bg-slate-200 hover:bg-rose-200 hover:text-rose-800 text-slate-700 font-bold transition flex items-center justify-center">-</button>
+                    ${numInput(`onchange="setDualStock('${catId}', ${item.id}, 'dus', this.value)"`, item.dusStock, 'w-10 h-5')}
+                    <button onclick="adjustDualStock('${catId}', ${item.id}, 'dus', 1)" class="w-5 h-5 rounded bg-slate-200 hover:bg-emerald-200 hover:text-emerald-800 text-slate-700 font-bold transition flex items-center justify-center">+</button>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-semibold">${t.satuanLabel}:</span>
+                  <div class="flex items-center gap-1">
+                    <button onclick="adjustDualStock('${catId}', ${item.id}, 'satuan', -1)" class="w-5 h-5 rounded bg-slate-200 hover:bg-rose-200 hover:text-rose-800 text-slate-700 font-bold transition flex items-center justify-center">-</button>
+                    ${numInput(`onchange="setDualStock('${catId}', ${item.id}, 'satuan', this.value)"`, item.satuanStock, 'w-10 h-5')}
+                    <button onclick="adjustDualStock('${catId}', ${item.id}, 'satuan', 1)" class="w-5 h-5 rounded bg-slate-200 hover:bg-emerald-200 hover:text-emerald-800 text-slate-700 font-bold transition flex items-center justify-center">+</button>
+                  </div>
+                </div>
+              </div>
+            ` : `
+              ${buyLabel(status)}
+            `}
+          </div>
+        `;
+      } else {
+        return `
+          <div class="bg-slate-50/70 hover:bg-white rounded-xl p-3 border border-slate-200/90 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group">
+            <div>
+              <div class="flex items-start justify-between gap-1 mb-2">
+                ${renderBadge(status)}
+              </div>
+              ${renderPhoto(item, catId)}
+              <h3 class="font-bold text-slate-800 text-xs sm:text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-emerald-700 transition">
+                ${item.name}
+              </h3>
+              <div class="text-[11px] font-extrabold text-emerald-700 mb-2">${item.price}</div>
+              <div class="text-[11px] text-slate-500 mb-2">
+                ${item.stock > 0 
+                  ? `<span class="font-medium text-slate-700">${t.unitRemaining}: <b class="text-slate-900">${item.stock}</b> ${item.unitName}</span>` 
+                  : `<span class="font-semibold text-rose-600">${t.statusOut}</span>`}
+              </div>
+            </div>
+
+            <!-- Owner Quick Actions -->
+            ${isOwnerMode ? `
+              <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
+                <span class="text-slate-400 text-[10px]">${t.stockLabel}</span>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="adjustStock('${catId}', ${item.id}, -1)" class="w-6 h-6 rounded-lg bg-slate-200 hover:bg-rose-200 hover:text-rose-800 text-slate-700 font-bold transition flex items-center justify-center shadow-sm">-</button>
+                  ${numInput(`onchange="setStock('${catId}', ${item.id}, this.value)"`, item.stock, 'w-12 h-6 text-xs')}
+                  <button onclick="adjustStock('${catId}', ${item.id}, 1)" class="w-6 h-6 rounded-lg bg-slate-200 hover:bg-emerald-200 hover:text-emerald-800 text-slate-700 font-bold transition flex items-center justify-center shadow-sm">+</button>
+                </div>
+              </div>
+            ` : `
+              ${buyLabel(status)}
+            `}
+          </div>
+        `;
+      }
+    }
+
+    // Adjust Stock Functions (Owner Simulation)
+    function adjustStock(catId, itemId, delta) {
+      const cat = categories.find(c => c.id === catId);
+      if (!cat) return;
+      const item = cat.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      item.stock = Math.max(0, item.stock + delta);
+      renderApp();
+    }
+
+    function adjustDualStock(catId, itemId, type, delta) {
+      const cat = categories.find(c => c.id === catId);
+      if (!cat) return;
+      const item = cat.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (type === 'dus') {
+        item.dusStock = Math.max(0, item.dusStock + delta);
+      } else {
+        item.satuanStock = Math.max(0, item.satuanStock + delta);
+      }
+      renderApp();
+    }
+
+    function resetToInitialData() {
+      if (!confirm('Kembalikan semua data ke awal? Barang yang Anda tambahkan akan terhapus.')) return;
+      categories = JSON.parse(JSON.stringify(initialCategories));
+      renderApp();
+    }
+
+    // Add / delete items (owner)
+    function openAddItem() {
+      document.getElementById('addCat').innerHTML = categories.map(c => `<option value="${c.id}">${c.nameId}</option>`).join('');
+      ['addName','addPrice','addUnit'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('addStock').value = 10; document.getElementById('addMin').value = 3;
+      document.getElementById('addPhoto').value = '';
+      document.getElementById('addType').value = 'simple'; toggleAddType();
+      document.getElementById('addError').classList.add('hidden');
+      const m = document.getElementById('addModal'); m.classList.remove('hidden'); m.classList.add('flex');
+    }
+    function closeAddItem() {
+      const m = document.getElementById('addModal'); m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    function toggleAddType() {
+      const dual = document.getElementById('addType').value === 'dual';
+      document.getElementById('addSimple').classList.toggle('hidden', dual);
+      document.getElementById('addDual').classList.toggle('hidden', !dual);
+      document.getElementById('addPrice').placeholder = dual ? 'Contoh: Rp 115.000 / dus • Rp 3.100 / bks' : 'Contoh: 35000';
+    }
+    function fmtPrice(v) {
+      v = v.trim();
+      return /^[\d.,\s]+$/.test(v) ? 'Rp ' + (parseInt(v.replace(/\D/g, ''), 10) || 0).toLocaleString('id-ID') : v;
+    }
+    function saveNewItem() {
+      const err = document.getElementById('addError');
+      const name = document.getElementById('addName').value.trim();
+      const price = fmtPrice(document.getElementById('addPrice').value);
+      const dual = document.getElementById('addType').value === 'dual';
+      const unit = document.getElementById('addUnit').value.trim();
+      if (!name || !price || (!dual && !unit)) {
+        err.innerText = 'Nama barang, harga' + (dual ? '' : ', dan satuan') + ' wajib diisi.'; err.classList.remove('hidden'); return;
+      }
+      const id = Date.now();
+      const val = x => cleanNum(document.getElementById(x).value);
+      const item = dual
+        ? { id, name, price, unitType: 'dual',
+            dusStock: val('addDusStock'), dusUnit: document.getElementById('addDusUnit').value.trim() || 'dus',
+            satuanStock: val('addSatStock'), satuanUnit: document.getElementById('addSatUnit').value.trim() || 'bks', minThreshold: 2 }
+        : { id, name, price, unitType: 'simple', unitName: unit, stock: val('addStock'), minThreshold: val('addMin') };
+      categories.find(c => c.id === document.getElementById('addCat').value).items.push(item);
+      const finish = () => { closeAddItem(); renderApp(); };
+      const file = document.getElementById('addPhoto').files[0];
+      if (!file) return finish();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const r = Math.min(1, 320 / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          photos[id] = c.toDataURL('image/jpeg', 0.8); savePhotos(); finish();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function deleteItem(catId, id) {
+      const cat = categories.find(c => c.id === catId);
+      const item = cat.items.find(i => i.id === id);
+      if (!confirm('Hapus "' + item.name + '"?')) return;
+      cat.items = cat.items.filter(i => i.id !== id);
+      delete photos[id]; savePhotos(); renderApp();
+    }
+
+    // Role Switcher + Login
+    const OWNER_USER = 'tokosembako';
+    const OWNER_PASS = 'admin123';
+
+    function applyRoleUI() {
+      const t = i18n[currentLang];
+      document.getElementById('roleLabel').innerText = isOwnerMode ? t.roleOwner : t.roleBuyer;
+      const banner = document.getElementById('adminBanner');
+      banner.classList.toggle('hidden', !isOwnerMode);
+      banner.classList.toggle('flex', isOwnerMode);
+    }
+
+    function toggleRole() {
+      if (isOwnerMode) { isOwnerMode = false; applyRoleUI(); renderApp(); }
+      else openLogin();
+    }
+
+    function openLogin() {
+      const t = i18n[currentLang];
+      document.getElementById('loginTitle').innerText = t.loginTitle;
+      document.getElementById('loginDesc').innerText = t.loginDesc;
+      document.getElementById('loginUser').placeholder = t.loginUser;
+      document.getElementById('loginPass').placeholder = t.loginPass;
+      document.getElementById('loginCancel').innerText = t.loginCancel;
+      document.getElementById('loginSubmit').innerText = t.loginSubmit;
+      document.getElementById('loginError').classList.add('hidden');
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
+      const m = document.getElementById('loginModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      document.getElementById('loginUser').focus();
+    }
+    function closeLogin() {
+      const m = document.getElementById('loginModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    function submitLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      if (u === OWNER_USER && p === OWNER_PASS) {
+        isOwnerMode = true; closeLogin(); applyRoleUI(); renderApp();
+      } else {
+        const e = document.getElementById('loginError');
+        e.innerText = i18n[currentLang].loginWrong; e.classList.remove('hidden');
+      }
+    }
+    document.addEventListener('keydown', ev => {
+      if (document.getElementById('loginModal').classList.contains('hidden')) return;
+      if (ev.key === 'Enter') submitLogin();
+      if (ev.key === 'Escape') closeLogin();
+    });
+
+    // Language Toggle
+    function toggleLanguage() {
+      currentLang = currentLang === 'id' ? 'en' : 'id';
+      const t = i18n[currentLang];
+
+      document.getElementById('langLabel').innerText = t.langBtn;
+      document.getElementById('roleLabel').innerText = isOwnerMode ? t.roleOwner : t.roleBuyer;
+      document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+      document.getElementById('announcementText').innerText = t.announcement;
+      document.getElementById('metricTotalLabel').innerText = t.metricTotal;
+      document.getElementById('metricInStockLabel').innerText = t.metricInStock;
+      document.getElementById('metricLowLabel').innerText = t.metricLow;
+      document.getElementById('metricOutLabel').innerText = t.metricOut;
+
+      document.getElementById('filter-all').innerText = t.filterAll;
+      document.getElementById('filter-in').innerText = t.filterIn;
+      document.getElementById('filter-low').innerText = t.filterLow;
+      document.getElementById('filter-out').innerText = t.filterOut;
+
+      renderApp();
+    }
+
+    // Filter Chips Action
+    function setFilter(type) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.remove('bg-emerald-700', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+
+      const activeBtn = document.getElementById(`filter-${type}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-emerald-700', 'text-white');
+      }
+
+      renderApp();
+    }
+
+    // Search Listener
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderApp();
+    });
+
+    // Initialize App on DOM Ready
+    document.addEventListener('DOMContentLoaded', () => {
+      renderApp();
+    });
+  </script>
+</body>
+</html>
